@@ -30,11 +30,17 @@ contrastDataStruct = UpdateContrastDataStruct([], worksheetData.subjectList);
 
 writeFolder = '/v/psycho/TexAmb/Analysis/';
 fullFilePath = [writeFolder 'contrastDataStruct.mat'];
-save([writeFolder 'contrastDataStruct'],'contrastDataStruct')
-fileattrib(fullFilePath,'+w','a');
-fileattrib(fullFilePath,'+x','a');
+
+try
+    save([writeFolder 'contrastDataStruct'],'contrastDataStruct')
+    fileattrib(fullFilePath,'+w','a');
+    fileattrib(fullFilePath,'+x','a');
+catch 
+    load(fullFilePath)
+end
 
 %% Contrast data fits
+contrastDataStruct_fit = contrastDataPsychFit(contrastDataStruct);
 
 %% Contrast data plots
 
