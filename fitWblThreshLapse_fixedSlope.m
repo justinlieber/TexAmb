@@ -2,25 +2,43 @@
 % For data in an n x 3 format, fit a Weibull function of a given input
 % slope
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function fitParams = fitWblThreshLapse_fixedSlope(data, slope, chance)
-%%
-guessVec = linspace(data(1, 1), data(end, 1), 8).';
-guessVec(1, 2) = 0.01; % lapse rate
-val = 100000; % number of iterations for fitting.
-%%
-thetaFcn = @(params, data, chanceVal) chanceVal + ((1 - chanceVal - abs(params(3))) * wblcdf(data(:, 1), params(1), params(2))); %* 0.99 + 0.005;
-logLikFcn = @(Thresh, Slope, Lapse) -sum(data(:, 2).' * log(thetaFcn([Thresh, Slope, Lapse], data, chance)) + (data(:, 3) - data(:, 2)).' * log(1 - thetaFcn([Thresh, Slope, Lapse], data, chance)));
-llFun = @(params) logLikFcn(params(1), slope, params(2));
+function fitParams = fitWblThreshLapse_fixedSlope(data, fixedSlope, chance)
 
-lb = [min(data(data(:, 1) > 0, 1)), 0];
-ub = [max(data(:, 1)), 0.15];
 
-testParams = nan(length(guessVec), 2);
-testErr = nan(length(guessVec), 1);
-for k = 1 : length(guessVec)
-    guessParams = [guessVec(k, 1), guessVec(1, 2)];
-    testParams(k, :) = fmincon(llFun, guessParams, [], [], [], [], lb, ub, [], optimset('MaxFunEvals', val, 'MaxIter', val, 'Display', 'none'));
-    testErr(k) = llFun(testParams(k, :));
+thetaFcn    = @(params, data, chanceVal)  chanceVal + ((1 - chanceVal - abs(params(3))) * wblcdf(data(:, 1), params(1), params(2))); %* 0.99 + 0.005;
+logLikFcn   = @(Thresh, Slope, Lapse)     -sum(data(:, 2).' * log(thetaFcn([Thresh, Slope, Lapse], data, chance)) + (data(:, 3) - data(:, 2)).' * log(1 - thetaFcn([Thresh, Slope, Lapse], data, chance)));
+
+minData         = data(1, 1);
+maxData         = data(end,1);
+logDelta        = log2(maxData/minData);
+guessVec        = 2.^linspace(log2(data(1, 1))+logDelta*0.05, log2(data(end, 1))-logDelta*0.05, 8)';
+val             = 100000; % number of iterations for fitting.
+
+if ~exist('fixedSlope') || isempty(fixedSlope)
+    fixedSlope  = NaN;
+    llFun       = @(params)                   logLikFcn(params(1), params(2), params(3));
+    lapseInd    = 2;
+else
+    llFun       = @(params)                   logLikFcn(params(1), fixedSlope, params(2));
+    guessVec(:,2)   = 2; % slope guess;
+    lapseInd    = 3;
 end
+
+guessVec(:, lapseInd)  = 0.01; % lapse rate
+
+%%
+
+lb          = [min(data(data(:, 1) > 0, 1)), 0];
+ub          = [max(data(:, 1)), 0.15];
+
+testParams  = nan(length(guessVec), 2);
+testErr     = nan(length(guessVec), 1);
+
+for gInd = 1 : length(guessVec)
+    guessParams         = [guessVec(gInd, 1), guessVec(1, 2)];
+    testParams(gInd, :) = fmincon(llFun, guessParams, [], [], [], [], lb, ub, [], optimset('MaxFunEvals', val, 'MaxIter', val, 'Display', 'none'));
+    testErr(gInd)       = llFun(testParams(gInd, :));
+end
+
 [~, minInd] = min(testErr);
-fitParams = testParams(minInd, :);
+fitParams   = testParams(minInd, :);

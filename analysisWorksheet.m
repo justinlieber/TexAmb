@@ -59,7 +59,7 @@ save([writeFolder 'textureDataStruct'],'textureDataStruct')
 fileattrib(fullFilePath,'+w','a');
 fileattrib(fullFilePath,'+x','a');
 
-%% Low-pass filtered texture data
+%% Analysis of low-pass filtered texture data
 
 % We're going to need extensive control data for these experiments, so that
 % we have a good map from texture sensitivity to low-pass filter edge.
