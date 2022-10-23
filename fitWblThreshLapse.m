@@ -2,7 +2,7 @@
 % For data in an n x 3 format, fit a Weibull function of a given input
 % slope
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function fitParams = fitWblThreshLapse_fixedSlope(data, chance, fixedSlope)
+function fitParams = fitWblThreshLapse(data, chance, fixedSlope)
 
 
 thetaFcn    = @(params, data, chanceVal)  chanceVal + ((1 - chanceVal - abs(params(3))) * wblcdf(data(:, 1), params(1), params(2))); %* 0.99 + 0.005;
@@ -15,13 +15,13 @@ guessVec        = 2.^linspace(log2(data(1, 1))+logDelta*0.05, log2(data(end, 1))
 val             = 100000; % number of iterations for fitting.
 
 if ~exist('fixedSlope') || isempty(fixedSlope) || fixedSlope==false
-    fixedSlope  = NaN;
-    llFun       = @(params)                   logLikFcn(params(1), params(2), params(3));
-    lapseInd    = 2;
-else
-    llFun       = @(params)                   logLikFcn(params(1), fixedSlope, params(2));
+    fixedSlope      = NaN;
+    llFun           = @(params)           logLikFcn(params(1), params(2), params(3));
     guessVec(:,2)   = 2; % slope guess;
-    lapseInd    = 3;
+    lapseInd        = 3;
+else
+    llFun           = @(params)           logLikFcn(params(1), fixedSlope, params(2));
+    lapseInd        = 2;
 end
 
 guessVec(:, lapseInd)  = 0.01; % lapse rate

@@ -32,7 +32,7 @@ writeFolder = '/v/psycho/TexAmb/Analysis/';
 fullFilePath = [writeFolder 'contrastDataStruct.mat'];
 
 try
-    save([writeFolder 'contrastDataStruct'],'contrastDataStruct')
+    save(fullFilePath,'contrastDataStruct')
     fileattrib(fullFilePath,'+w','a');
     fileattrib(fullFilePath,'+x','a');
 catch 
@@ -40,7 +40,21 @@ catch
 end
 
 %% Contrast data fits
-contrastDataStruct_fit = contrastDataPsychFit(contrastDataStruct); % yo
+warning('\n\nWe can change these functions to update an existing fit function\n\n');
+warning('\n\nPutting the fits into the data struct variables makes updating tricky. Might need to separate them.\n\n');
+
+contrastDataStruct_fit = contrastDataPsychFit(contrastDataStruct); 
+
+%%
+fullFilePath = [writeFolder 'contrastDataStruct_fit.mat'];
+try
+    save(fullFilePath, 'contrastDataStruct_fit')
+    fileattrib(fullFilePath,'+w','a');
+    fileattrib(fullFilePath,'+x','a');
+catch 
+    load(fullFilePath)
+end
+
 
 %% Contrast data plots
 contrastDataPsychPlot(contrastDataStruct_fit)
@@ -54,11 +68,30 @@ textureDataStruct = UpdateTextureDataStruct([], worksheetData.subjectList);
 %textureDataStruct = UpdateTextureDataStruct(textureDataStruct, worksheetData.subjectList);
 
 %%
-writeFolder = '/v/psycho/TexAmb/Analysis/';
 fullFilePath = [writeFolder 'textureDataStruct.mat'];
-save([writeFolder 'textureDataStruct'],'textureDataStruct')
-fileattrib(fullFilePath,'+w','a');
-fileattrib(fullFilePath,'+x','a');
+try
+    save(fullFilePath, 'textureDataStruct')
+    fileattrib(fullFilePath,'+w','a');
+    fileattrib(fullFilePath,'+x','a');
+catch 
+    load(fullFilePath)
+end
+
+%% Get texture psychophysical functions
+
+
+textureDataStruct_fit = textureDataPsychFit(textureDataStruct); 
+
+%%
+
+fullFilePath = [writeFolder 'textureDataStruct_fit.mat'];
+try
+    save(fullFilePath, 'textureDataStruct_fit')
+    fileattrib(fullFilePath,'+w','a');
+    fileattrib(fullFilePath,'+x','a');
+catch 
+    load(fullFilePath)
+end
 
 %% Analysis of low-pass filtered texture data
 
