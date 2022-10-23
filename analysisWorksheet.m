@@ -130,6 +130,7 @@ end
 contrastDataStruct_fit = contrastDataPsychFit(contrastDataStruct); % yo
 
 %% Contrast data plots
+contrastDataPsychPlot(contrastDataStruct_fit)
 
 %% Standard Texture Data
 
