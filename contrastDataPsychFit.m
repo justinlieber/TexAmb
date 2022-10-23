@@ -33,6 +33,8 @@ for subjInd = 1:nSubjects
             if ~isempty(aggData)
                 fitParams  = fitWblThreshLapse_fixedSlope(aggData, pfSlope, 0.5);
                 dataOut.conThreshAggPF{sfInd, eyeInd, subjInd} = [pfSlope, fitParams];
+%                 dataOut.behSummaryAgg{jj, k, j} = aggData;
+
             end
         end
         [subjInd eyeInd]
