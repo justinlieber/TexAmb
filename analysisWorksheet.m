@@ -18,103 +18,16 @@ eyeCodeList         = {'L','R'};
 
 %% Extract subject list and other data from the Google Sheet
 
-csvFileName = 'Amblyopia Subject Data - Experiment Status.csv';
-thisCSVData = readtable([baseAnalysisFolder csvFileName]);
-
-fullSubjectList = thisCSVData.Subject;
-
-dropInd = find(~cellfun(@isempty,strfind(fullSubjectList,'Drop Out')));
-useInd  = (1:dropInd-1);
-useInd  = useInd(~cellfun(@isempty,fullSubjectList(useInd)));
-useInd  = useInd(~cellfun(@(x)(strcmp(x,'KPS')),fullSubjectList(useInd))); % Special case, no medical confirmation of amblyopia
-
-subjectList = fullSubjectList(useInd);
-hasStarInd = cellfun(@(x)~isempty(strfind(x,'*')),subjectList);
-subjectList(hasStarInd) = cellfun(@(x)(x(x~='*')),subjectList(hasStarInd),'UniformOutput',false);
-
-% Right now, stars are controls
-controlInd = find(hasStarInd);
-confAmbInd = thisCSVData.ResultsObtained(useInd);
-
-logMARData  = thisCSVData.Logmar_L_R_(useInd);
-prData      = thisCSVData.PR_L_R_(useInd);
-
-[subjectList logMARData prData]
-
-
-nSubj = length(subjectList);
-
+worksheetData = ExtractSubjectWorksheetData();
 
 %% Extract Contrast Threshold Data
 
-calibFolder = [baseDataFolder 'ContrastCalibration/'];
-contrastFolder = [baseDataFolder 'SimpleContrastTask/'];
+% Reload all the data
+contrastDataStruct = UpdateContrastDataStruct([], worksheetData.subjectList);
 
-% there should just be one of these, right? 
-sfValList   = [0.35 1.41 2.83 5.66 11.31];
-nSF         = length(sfValList);
+% Update an existing structure
+%contrastDataStruct = UpdateContrastDataStruct(contrastDataStruct, worksheetData.subjectList);
 
-nEye        = 2; %lol
-
-getContrastDataStruct               = {};
-getContrastDataStruct.sfList        = sfValList;
-getContrastDataStruct.eyeOrder      = eyeCodeList;
-getContrastDataStruct.subjectList   = subjectList;
-getContrastDataStruct.indexNames    = {'spatial frequency','eye (L/R)','file index','subject'};
-getContrastDataStruct.calibContrast = [];
-getContrastDataStruct.conThreshData = {};
-for subjInd = 1:nSubj
-    subjCode = subjectList{subjInd};
-    for eyeInd = 1:nEye
-        for sfInd = 1:nSF
-            sfVal = sfValList(sfInd);
-            
-            % Calibration contrast data
-            fList = dir([calibFolder sprintf('*Subject(%s)-Eye(%s)-SpatialFreq(%0.2f)*.mat',subjCode,eyeCodeList{eyeInd},sfVal)]);
-            for fInd = 1:length(fList)
-                fileData = load([calibFolder fList(fInd).name]);
-                getContrastDataStruct.calibContrast(sfInd,eyeInd,fInd,subjInd) = ...
-                    fileData.finalContrast;
-            end
-            
-            % Main task contrast data
-            fList = dir([contrastFolder sprintf('*Subject(%s)-Eye(%s)-SpatialFreq(%0.2f)*-Taken*T*.mat',subjCode,eyeCodeList{eyeInd},sfVal)]);
-            for fInd = 1:length(fList)
-                thisFilename = [contrastFolder fList(fInd).name];
-                fileData = load(thisFilename);
-                
-                tInd        = strfind(thisFilename,'T');
-                takenInd    = strfind(thisFilename,'Taken');
-                dateString  = thisFilename(takenInd+5:tInd(find(tInd>takenInd,1,'first'))-1);
-                thisDate    = datetime(dateString,'InputFormat','yyyymmdd');
-                
-                thisDataStruct = [];
-                
-                saveColInd      = [find(strcmp(fileData.outputStruct.behDimNames,'behStimLevel')) find(strcmp(fileData.outputStruct.behDimNames,'behCorrect'))];
-                contrastList    = fileData.groupProperties.contrastList;
-                
-                thisDataStruct.trialList    = fileData.outputStruct.behavior(:,saveColInd);
-                thisDataStruct.trialList(:,1) = contrastList(thisDataStruct.trialList(:,1));
-                thisDataStruct.behSummary   = fileData.behSummaryMat;
-                thisDataStruct.filename     = thisFilename;
-                thisDataStruct.date         = thisDate;
-                
-                getContrastDataStruct.conThreshData{sfInd,eyeInd,fInd,subjInd} = thisDataStruct;
-            end
-            [subjInd eyeInd sfVal]
-        end
-    end
-end
-
-
-getContrastDataStruct.conThreshDate = NaT(size(getContrastDataStruct.conThreshData));
-ctMask = ~cellfun(@isempty,getContrastDataStruct.conThreshData);
-getContrastDataStruct.conThreshDate(ctMask) = cellfun(@(x)(x.date),getContrastDataStruct.conThreshData(ctMask));
-
-
-contrastDataStruct = getContrastDataStruct;
-
-%%
 writeFolder = '/v/psycho/TexAmb/Analysis/';
 fullFilePath = [writeFolder 'contrastDataStruct.mat'];
 
@@ -134,23 +47,39 @@ contrastDataPsychPlot(contrastDataStruct_fit)
 
 %% Standard Texture Data
 
+% Reload all the data
+textureDataStruct = UpdateTextureDataStruct([], worksheetData.subjectList);
+
+% Update an existing structure
+%textureDataStruct = UpdateTextureDataStruct(textureDataStruct, worksheetData.subjectList);
+
+%%
+writeFolder = '/v/psycho/TexAmb/Analysis/';
+fullFilePath = [writeFolder 'textureDataStruct.mat'];
+save([writeFolder 'textureDataStruct'],'textureDataStruct')
+fileattrib(fullFilePath,'+w','a');
+fileattrib(fullFilePath,'+x','a');
 
 %% Low-pass filtered texture data
 
 % We're going to need extensive control data for these experiments, so that
 % we have a good map from texture sensitivity to low-pass filter edge.
 
-%% McKee Data
-%
-%
+%% Extracting McKee Data
 
-%% McKee: Contrast
 
-%% McKee: Acuity 
+% Reload all the data
+mcKeeDataStruct = UpdateMcKeeDataStruct([], worksheetData);
 
-%% McKee: Vernier
+% Update an existing structure
+% mcKeeDataStruct = UpdateMcKeeDataStruct(mcKeeDataStruct, worksheetData);
 
-%% McKee: Extacting Snellen and Pelli acuity
+%%
+writeFolder = '/v/psycho/TexAmb/Analysis/';
+fullFilePath = [writeFolder 'mcKeeDataStruct.mat'];
+save([writeFolder 'mcKeeDataStruct'],'mcKeeDataStruct')
+fileattrib(fullFilePath,'+w','a');
+fileattrib(fullFilePath,'+x','a');
 
 %% McKee: Low-dimensional factor space analysis from the paper
 
