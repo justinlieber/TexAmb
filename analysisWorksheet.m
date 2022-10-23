@@ -121,6 +121,11 @@ save([writeFolder 'contrastDataStruct'],'contrastDataStruct')
 fileattrib(fullFilePath,'+w','a');
 fileattrib(fullFilePath,'+x','a');
 
+
+%% Contrast data fits
+
+%% Contrast data plots
+
 %% Standard Texture Data
 
 
