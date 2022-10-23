@@ -3,7 +3,6 @@ function contrastDataStruct = UpdateContrastDataStruct(contrastDataStruct, subje
 baseDataFolder      = '/v/psycho/TexAmb/Results/';
 calibFolder         = [baseDataFolder 'ContrastCalibration/'];
 contrastFolder      = [baseDataFolder 'SimpleContrastTask/'];
-baseAnalysisFolder  = '/v/paycho/TexAmb/Analysis/';
 
 % there should just be one of these, right? 
 sfValList   = [0.35 1.41 2.83 5.66 11.31];
@@ -64,28 +63,30 @@ for subjInd = 1:length(contrastDataStruct.subjectList)
             for fListInd = 1:length(fList)
                 thisFilename = [contrastFolder fList(fListInd).name];
                 
-                if (size(contrastDataStruct.conThreshFilename,1) < nSF || size(contrastDataStruct.conThreshFilename,2) < nEye) || ...
-                        ~any(strcmp(contrastDataStruct.conThreshFilename(sfInd,eyeInd,:,subjInd),thisFilename))
+                if ~any(strcmp(contrastDataStruct.conThreshFilename(sfInd,eyeInd,:,subjInd),thisFilename))
                     fLength = sum(~cellfun(@isempty,contrastDataStruct.conThreshFilename(sfInd,eyeInd,:,subjInd)));
                     fInd = fLength + 1;
                 
                     fileData = load(thisFilename);
 
-                    tInd        = strfind(thisFilename,'T');
-                    takenInd    = strfind(thisFilename,'Taken');
-                    dateString  = thisFilename(takenInd+5:tInd(find(tInd>takenInd,1,'first'))-1);
-                    thisDate    = datetime(dateString,'InputFormat','yyyymmdd');
-
-                    thisDataStruct = [];
-
-                    saveColInd      = [find(strcmp(fileData.outputStruct.behDimNames,'behStimLevel')) find(strcmp(fileData.outputStruct.behDimNames,'behCorrect'))];
-                    contrastList    = fileData.groupProperties.contrastList;
-
-                    thisDataStruct.trialList    = fileData.outputStruct.behavior(:,saveColInd);
-                    thisDataStruct.trialList(:,1) = contrastList(thisDataStruct.trialList(:,1));
-                    thisDataStruct.behSummary   = fileData.behSummaryMat;
-                    thisDataStruct.filename     = thisFilename;
-                    thisDataStruct.date         = thisDate;
+                    levelList    = fileData.groupProperties.contrastList;
+                    thisDataStruct = MakeDataStruct(fileData, levelList);
+                    
+%                     tInd        = strfind(thisFilename,'T');
+%                     takenInd    = strfind(thisFilename,'Taken');
+%                     dateString  = thisFilename(takenInd+5:tInd(find(tInd>takenInd,1,'first'))-1);
+%                     thisDate    = datetime(dateString,'InputFormat','yyyymmdd');
+% 
+%                     thisDataStruct = [];
+% 
+%                     saveColInd      = [find(strcmp(fileData.outputStruct.behDimNames,'behStimLevel')) find(strcmp(fileData.outputStruct.behDimNames,'behCorrect'))];
+%                     contrastList    = fileData.groupProperties.contrastList;
+% 
+%                     thisDataStruct.trialList    = fileData.outputStruct.behavior(:,saveColInd);
+%                     thisDataStruct.trialList(:,1) = contrastList(thisDataStruct.trialList(:,1));
+%                     thisDataStruct.behSummary   = fileData.behSummaryMat;
+%                     thisDataStruct.filename     = thisFilename;
+%                     thisDataStruct.date         = thisDate;
 
                     contrastDataStruct.conThreshData{sfInd,eyeInd,fInd,subjInd} = thisDataStruct;
                     contrastDataStruct.conThreshFilename{sfInd,eyeInd,fInd,subjInd} = thisFilename;
