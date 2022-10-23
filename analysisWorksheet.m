@@ -18,40 +18,15 @@ eyeCodeList         = {'L','R'};
 
 %% Extract subject list and other data from the Google Sheet
 
-csvFileName = 'Amblyopia Subject Data - Experiment Status.csv';
-thisCSVData = readtable([baseAnalysisFolder csvFileName]);
-
-fullSubjectList = thisCSVData.Subject;
-
-dropInd = find(~cellfun(@isempty,strfind(fullSubjectList,'Drop Out')));
-useInd  = (1:dropInd-1);
-useInd  = useInd(~cellfun(@isempty,fullSubjectList(useInd)));
-useInd  = useInd(~cellfun(@(x)(strcmp(x,'KPS')),fullSubjectList(useInd))); % Special case, no medical confirmation of amblyopia
-
-subjectList = fullSubjectList(useInd);
-hasStarInd = cellfun(@(x)~isempty(strfind(x,'*')),subjectList);
-subjectList(hasStarInd) = cellfun(@(x)(x(x~='*')),subjectList(hasStarInd),'UniformOutput',false);
-
-% Right now, stars are controls
-controlInd = find(hasStarInd);
-confAmbInd = thisCSVData.ResultsObtained(useInd);
-
-logMARData  = thisCSVData.Logmar_L_R_(useInd);
-prData      = thisCSVData.PR_L_R_(useInd);
-
-[subjectList logMARData prData]
-
-
-nSubj = length(subjectList);
-
+worksheetData = ExtractSubjectWorksheetData();
 
 %% Extract Contrast Threshold Data
 
 % Reload all the data
-contrastDataStruct = UpdateContrastDataStruct([], subjectList);
+contrastDataStruct = UpdateContrastDataStruct([], worksheetData.subjectList);
 
 % Update an existing structure
-%contrastDataStruct = UpdateContrastDataStruct(contrastDataStruct, subjectList);
+%contrastDataStruct = UpdateContrastDataStruct(contrastDataStruct, worksheetData.subjectList);
 
 writeFolder = '/v/psycho/TexAmb/Analysis/';
 fullFilePath = [writeFolder 'contrastDataStruct.mat'];
@@ -66,10 +41,10 @@ fileattrib(fullFilePath,'+x','a');
 %% Standard Texture Data
 
 % Reload all the data
-textureDataStruct = UpdateTextureDataStruct([], subjectList);
+textureDataStruct = UpdateTextureDataStruct([], worksheetData.subjectList);
 
 % Update an existing structure
-%textureDataStruct = UpdateTextureDataStruct(textureDataStruct, subjectList);
+%textureDataStruct = UpdateTextureDataStruct(textureDataStruct, worksheetData.subjectList);
 
 %%
 writeFolder = '/v/psycho/TexAmb/Analysis/';
@@ -83,17 +58,21 @@ fileattrib(fullFilePath,'+x','a');
 % We're going to need extensive control data for these experiments, so that
 % we have a good map from texture sensitivity to low-pass filter edge.
 
-%% McKee Data
-%
-%
+%% Extracting McKee Data
 
-%% McKee: Contrast
 
-%% McKee: Acuity 
+% Reload all the data
+mcKeeDataStruct = UpdateMcKeeDataStruct([], worksheetData);
 
-%% McKee: Vernier
+% Update an existing structure
+% mcKeeDataStruct = UpdateMcKeeDataStruct(mcKeeDataStruct, worksheetData);
 
-%% McKee: Extacting Snellen and Pelli acuity
+%%
+writeFolder = '/v/psycho/TexAmb/Analysis/';
+fullFilePath = [writeFolder 'mcKeeDataStruct.mat'];
+save([writeFolder 'mcKeeDataStruct'],'mcKeeDataStruct')
+fileattrib(fullFilePath,'+w','a');
+fileattrib(fullFilePath,'+x','a');
 
 %% McKee: Low-dimensional factor space analysis from the paper
 

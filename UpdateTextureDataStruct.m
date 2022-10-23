@@ -1,5 +1,6 @@
 function textureDataStruct = UpdateTextureDataStruct(textureDataStruct, subjectList)
 
+%%
 baseDataFolder          = '/v/psycho/TexAmb/Results/';
 calibTextureFolder      = [baseDataFolder 'SimpleTextureTask/day0/'];
 basicTextureFolder      = [baseDataFolder 'SimpleTextureTask/'];
@@ -21,6 +22,7 @@ if ~exist('textureDataStruct') || isempty(textureDataStruct)
     textureDataStruct.subjectList   = subjectList;
     textureDataStruct.basicIndexNames    = {'texture family','eye (L/R)','file index','subject'};
     
+    
     nSubj       = length(textureDataStruct.subjectList);
     nFilt       = length(textureDataStruct.lpFilterEdgeList);
     
@@ -30,6 +32,7 @@ if ~exist('textureDataStruct') || isempty(textureDataStruct)
     textureDataStruct.texBasicData = cell(nTex,nEye,1,nSubj);
     textureDataStruct.texBasicFilename = cell(nTex,nEye,1,nSubj);
 
+    textureDataStruct.lowPassIndexNames    = {'texture family','eye (L/R)','low pass filter edge frequency (c/deg)', 'file index','subject'};
     textureDataStruct.texLowPassData = cell(nTex,nEye,nFilt,1,nSubj);
     textureDataStruct.texLowPassFilename = cell(nTex,nEye,nFilt,1,nSubj);
 else
@@ -100,8 +103,8 @@ for subjInd = 1:length(textureDataStruct.subjectList)
                 for fListInd = 1:length(fList)
                     thisFilename = [lowPassTextureFolder fList(fListInd).name];
 
-                    if ~any(strcmp(textureDataStruct.texLowPassFilename(texInd,eyeInd,:,subjInd),thisFilename))
-                        fLength = sum(~cellfun(@isempty,textureDataStruct.texLowPassFilename(texInd,eyeInd,:,subjInd)));
+                    if ~any(strcmp(textureDataStruct.texLowPassFilename(texInd,eyeInd,filtInd,:,subjInd),thisFilename))
+                        fLength = sum(~cellfun(@isempty,textureDataStruct.texLowPassFilename(texInd,eyeInd,filtInd,:,subjInd)));
                         fInd = fLength + 1;
 
                         fileData = load(thisFilename);
@@ -119,7 +122,6 @@ for subjInd = 1:length(textureDataStruct.subjectList)
     end
 end
 
-%%
 textureDataStruct.texBasicDate = NaT(size(textureDataStruct.texBasicData));
 tbMask = ~cellfun(@isempty,textureDataStruct.texBasicData);
 textureDataStruct.texBasicDate(tbMask) = cellfun(@(x)(x.date),textureDataStruct.texBasicData(tbMask));
