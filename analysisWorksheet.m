@@ -45,36 +45,81 @@ prData      = thisCSVData.PR_L_R_(useInd);
 nSubj = length(subjectList);
 
 
-%% Contrast Threshold Data
+%% Extract Contrast Threshold Data
 
 calibFolder = [baseDataFolder 'ContrastCalibration/'];
 contrastFolder = [baseDataFolder 'SimpleContrastTask/'];
 
 % there should just be one of these, right? 
-sfValList = [0.35 1.41 2.83 5.66 11.31];
+sfValList   = [0.35 1.41 2.83 5.66 11.31];
+nSF         = length(sfValList);
 
-for subjectInd = 1:nSubj
-    subjCode = subjectList{subjectInd};
-    for eyeInd = 1:2
-        for sfInd = 1:length(sfValList)
+nEye        = 2; %lol
+
+getContrastDataStruct               = {};
+getContrastDataStruct.sfList        = sfValList;
+getContrastDataStruct.eyeOrder      = eyeCodeList;
+getContrastDataStruct.subjectList   = subjectList;
+getContrastDataStruct.indexNames    = {'spatial frequency','eye (L/R)','file index','subject'};
+getContrastDataStruct.calibContrast = [];
+getContrastDataStruct.conThreshData = {};
+for subjInd = 1:nSubj
+    subjCode = subjectList{subjInd};
+    for eyeInd = 1:nEye
+        for sfInd = 1:nSF
             sfVal = sfValList(sfInd);
             
             % Calibration contrast data
             fList = dir([calibFolder sprintf('*Subject(%s)-Eye(%s)-SpatialFreq(%0.2f)*.mat',subjCode,eyeCodeList{eyeInd},sfVal)]);
             for fInd = 1:length(fList)
                 fileData = load([calibFolder fList(fInd).name]);
+                getContrastDataStruct.calibContrast(sfInd,eyeInd,fInd,subjInd) = ...
+                    fileData.finalContrast;
             end
             
             % Main task contrast data
-            fList = dir([contrastFolder sprintf('*Subject(%s)-Eye(%s)-SpatialFreq(%0.2f)*.mat',subjCode,eyeCodeList{eyeInd},sfVal)]);
-            length(fList)
+            fList = dir([contrastFolder sprintf('*Subject(%s)-Eye(%s)-SpatialFreq(%0.2f)*-Taken*T*.mat',subjCode,eyeCodeList{eyeInd},sfVal)]);
             for fInd = 1:length(fList)
-                fileData = load([contrastFolder fList(fInd).name]);
+                thisFilename = [contrastFolder fList(fInd).name];
+                fileData = load(thisFilename);
+                
+                tInd        = strfind(thisFilename,'T');
+                takenInd    = strfind(thisFilename,'Taken');
+                dateString  = thisFilename(takenInd+5:tInd(find(tInd>takenInd,1,'first'))-1);
+                thisDate    = datetime(dateString,'InputFormat','yyyymmdd');
+                
+                thisDataStruct = [];
+                
+                saveColInd      = [find(strcmp(fileData.outputStruct.behDimNames,'behStimLevel')) find(strcmp(fileData.outputStruct.behDimNames,'behCorrect'))];
+                contrastList    = fileData.groupProperties.contrastList;
+                
+                thisDataStruct.trialList    = fileData.outputStruct.behavior(:,saveColInd);
+                thisDataStruct.trialList(:,1) = contrastList(thisDataStruct.trialList(:,1));
+                thisDataStruct.behSummary   = fileData.behSummaryMat;
+                thisDataStruct.filename     = thisFilename;
+                thisDataStruct.date         = thisDate;
+                
+                getContrastDataStruct.conThreshData{sfInd,eyeInd,fInd,subjInd} = thisDataStruct;
             end
+            [subjInd eyeInd sfVal]
         end
     end
 end
 
+
+getContrastDataStruct.conThreshDate = NaT(size(getContrastDataStruct.conThreshData));
+ctMask = ~cellfun(@isempty,getContrastDataStruct.conThreshData);
+getContrastDataStruct.conThreshDate(ctMask) = cellfun(@(x)(x.date),getContrastDataStruct.conThreshData(ctMask));
+
+
+contrastDataStruct = getContrastDataStruct;
+
+%%
+writeFolder = '/v/psycho/TexAmb/Analysis/';
+fullFilePath = [writeFolder 'contrastDataStruct.mat'];
+save([writeFolder 'contrastDataStruct'],'contrastDataStruct')
+fileattrib(fullFilePath,'+w','a');
+fileattrib(fullFilePath,'+x','a');
 
 %% Standard Texture Data
 
