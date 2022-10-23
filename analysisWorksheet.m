@@ -117,6 +117,7 @@ contrastDataStruct = getContrastDataStruct;
 %%
 writeFolder = '/v/psycho/TexAmb/Analysis/';
 fullFilePath = [writeFolder 'contrastDataStruct.mat'];
+
 try
     save([writeFolder 'contrastDataStruct'],'contrastDataStruct')
     fileattrib(fullFilePath,'+w','a');
@@ -127,6 +128,7 @@ end
 
 %% Contrast data fits
 contrastDataStruct_fit = contrastDataPsychFit(contrastDataStruct);
+
 %% Contrast data plots
 
 %% Standard Texture Data
